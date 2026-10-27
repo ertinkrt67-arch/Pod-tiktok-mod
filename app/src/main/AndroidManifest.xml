@@ -1,24 +1,227 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+package com.podtiktok.mod
 
-    <uses-permission android:name="android.permission.INTERNET" />
+import android.net.Uri
+import android.os.Bundle
+import android.widget.VideoView
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 
-    <application
-        android:label="pod-tiktok-mod"
-        android:allowBackup="false"
-        android:usesCleartextTraffic="false"
-        android:theme="@android:style/Theme.Material.NoActionBar">
+private val Accent = Color(0xFFFF2D55)
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="true">
+private val videos = listOf(
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
+)
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-        </activity>
+        window.statusBarColor = android.graphics.Color.BLACK
+        window.navigationBarColor = android.graphics.Color.BLACK
 
-    </application>
-</manifest>
+        setContent {
+            MaterialTheme(
+                colorScheme = darkColorScheme(primary = Accent)
+            ) {
+                var videoIndex by remember { mutableIntStateOf(0) }
+                var likes by remember { mutableIntStateOf(0) }
+                var liked by remember { mutableStateOf(false) }
+                var tab by remember { mutableIntStateOf(0) }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black)
+                ) {
+                    if (tab == 0) {
+                        key(videoIndex) {
+                            AndroidView(
+                                modifier = Modifier.fillMaxSize(),
+                                factory = { context ->
+                                    VideoView(context).apply {
+                                        setVideoURI(
+                                            Uri.parse(videos[videoIndex])
+                                        )
+                                        setOnPreparedListener { player ->
+                                            player.isLooping = true
+                                            start()
+                                        }
+                                        setOnErrorListener { _, _, _ ->
+                                            true
+                                        }
+                                    }
+                                }
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .fillMaxWidth()
+                                .padding(top = 12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "pod-tiktok-mod",
+                                color = Color.White,
+                                fontSize = 23.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Для вас",
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(end = 12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(18.dp)
+                        ) {
+                            Text(
+                                "👤",
+                                fontSize = 32.sp
+                            )
+
+                            TextButton(
+                                onClick = {
+                                    liked = !liked
+                                    likes += if (liked) 1 else -1
+                                }
+                            ) {
+                                Column(
+                                    horizontalAlignment =
+                                        Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        if (liked) "❤️" else "🤍",
+                                        fontSize = 32.sp
+                                    )
+                                    Text(
+                                        "$likes",
+                                        color = Color.White
+                                    )
+                                }
+                            }
+
+                            TextButton(onClick = {
+                                android.widget.Toast.makeText(
+                                    this@MainActivity,
+                                    "Комментарии добавим следующим шагом",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }) {
+                                Column(
+                                    horizontalAlignment =
+                                        Alignment.CenterHorizontally
+                                ) {
+                                    Text("💬", fontSize = 30.sp)
+                                    Text("Коммент.", color = Color.White)
+                                }
+                            }
+
+                            TextButton(onClick = {
+                                videoIndex = (videoIndex + 1) % videos.size
+                                liked = false
+                                likes = 0
+                            }) {
+                                Column(
+                                    horizontalAlignment =
+                                        Alignment.CenterHorizontally
+                                ) {
+                                    Text("⬇️", fontSize = 30.sp)
+                                    Text("Далее", color = Color.White)
+                                }
+                            }
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .fillMaxWidth()
+                                .padding(
+                                    start = 16.dp,
+                                    end = 100.dp,
+                                    bottom = 94.dp
+                                )
+                        ) {
+                            Text(
+                                "@demo_creator",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 17.sp
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "Тестовое видео • Ролик ${videoIndex + 1}",
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                if (tab == 1) "Подписки" else "Профиль",
+                                color = Color.White,
+                                fontSize = 28.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                "Этот раздел настроим следующим шагом",
+                                color = Color.LightGray
+                            )
+                        }
+                    }
+
+                    NavigationBar(
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        containerColor = Color(0xFF151515)
+                    ) {
+                        NavigationBarItem(
+                            selected = tab == 0,
+                            onClick = { tab = 0 },
+                            icon = { Text("⌂", fontSize = 22.sp) },
+                            label = { Text("Главная") }
+                        )
+                        NavigationBarItem(
+                            selected = tab == 1,
+                            onClick = { tab = 1 },
+                            icon = { Text("♡", fontSize = 22.sp) },
+                            label = { Text("Подписки") }
+                        )
+                        NavigationBarItem(
+                            selected = tab == 2,
+                            onClick = { tab = 2 },
+                            icon = { Text("●", fontSize = 22.sp) },
+                            label = { Text("Профиль") }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
